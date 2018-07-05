@@ -1,4 +1,5 @@
 import React from 'react'
+import personServices from '../services/persons'
 
 const Add = ({app}) => {
     const addPerson = (event) => {
@@ -6,17 +7,53 @@ const Add = ({app}) => {
         if (!app.state.persons.map(p => p.name).includes(app.state.newName)) {
           const person = {
               name: app.state.newName,
-              number: app.state.newNum
+              number: app.state.newNum,
+              id: Math.max(...app.state.persons.map(p => p.id)) + 1
           }
-          const persons = app.state.persons.concat(person)
-          app.setState({
-              persons,
-              newName: '',
-              newNum: ''
-          })
+          personServices
+            .create(person)
+            .then(response => {
+                app.setState({
+                    persons: app.state.persons.concat(person),
+                    newName: '',
+                    newNum: '',
+                    message: `lisättiin ${person.name}`
+                })
+                app.timeout()
+            })
         }
         else {
-            alert("Henkilö on jo luettelossa.")
+            if (window.confirm(`${app.state.newName} on jo luettelossa, korvataanko vanha numero uudella?`)) {
+                const person = {
+                    name: app.state.newName,
+                    number: app.state.newNum,
+                    id: app.state.persons.find(p => p.name === app.state.newName).id
+                }
+                personServices
+                    .update(person)
+                    .then(response => {
+                        app.setState({
+                            persons: app.state.persons.filter(p=>p.name !== person.name).concat(person),
+                            newName: '',
+                            newNum: '',
+                            message: `muutettiin henkilön ${person.name} tietoja`
+                        })
+                        app.timeout()
+                    })
+                    .catch(error => {
+                        personServices
+                            .create(person)
+                            .then(response => {
+                                app.setState({
+                                    persons: app.state.persons.filter(p => p.name !== person.name).concat(person),
+                                    newName: '',
+                                    newNum: '',
+                                    message: `muutettiin henkilön ${person.name} tietoja`
+                                })
+                                app.timeout()
+                            })
+                    })
+            }
         }
     }
   

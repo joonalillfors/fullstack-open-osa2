@@ -2,7 +2,9 @@ import React from 'react';
 import Numbers from './components/numbers'
 import Filter from './components/filter'
 import Add from './components/add'
-import axios from 'axios';
+import personServices from './services/persons'
+import Notification from './components/notification'
+import './index.css'
 
 class App extends React.Component {
   constructor(props) {
@@ -11,25 +13,33 @@ class App extends React.Component {
       persons: [],
       newName: '',
       newNum: '',
-      filter: ''
+      filter: '',
+      message: null
     }
   }
 
-  componentDidMount() {
-    axios
-      .get('http://localhost:3001/persons')
+  componentWillMount() {
+    personServices
+      .getAll()
       .then(response => {
         this.setState({persons: response.data})
       })
+  }
+
+  timeout() {
+    setTimeout(() => {
+      this.setState({message: null})
+    }, 3000)
   }
 
   render() {
     return (
       <div>
         <h2>Puhelinluettelo</h2>
+        <Notification message={this.state.message} />
         <Filter app={this} />
         <Add app={this} />
-        <Numbers state={this.state} />
+        <Numbers app={this} />
       </div>
     )
   }
